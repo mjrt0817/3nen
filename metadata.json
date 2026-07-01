@@ -1,0 +1,6 @@
+{
+  "name": "小学3年生学習ドリル（算数・漢字）",
+  "description": "算数と漢字の反復練習、ガチャでのカードコレクション、保護者ダッシュボード、AI手書き採点、苦手分析など、楽しく勉強が続けられる機能が満載の学習アプリです。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
