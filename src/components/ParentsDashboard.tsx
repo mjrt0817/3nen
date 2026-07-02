@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, LearningLog, RarityType, GachaRates } from '../types';
-import { Plus, Trash2, Heart, ShieldCheck, AlertTriangle, CheckCircle2, TrendingUp, Sparkles, BookOpen, Coins, Beaker } from 'lucide-react';
+import { Plus, Trash2, Pencil, Heart, ShieldCheck, AlertTriangle, CheckCircle2, TrendingUp, Sparkles, BookOpen, Coins, Beaker } from 'lucide-react';
 
 interface ParentsDashboardProps {
   learningLogs: LearningLog[];
@@ -10,6 +10,7 @@ interface ParentsDashboardProps {
   gachaRates?: GachaRates;
   onAddCustomCard: (card: Card) => void;
   onDeleteCustomCard: (cardId: string) => void;
+  onUpdateCustomCard: (card: Card) => void;
   onClearLogs: () => void;
   onResetCards: () => void;
   onResetCoins: () => void;
@@ -33,6 +34,7 @@ export default function ParentsDashboard({
   gachaRates,
   onAddCustomCard,
   onDeleteCustomCard,
+  onUpdateCustomCard,
   onClearLogs,
   onResetCards,
   onResetCoins,
@@ -46,6 +48,7 @@ export default function ParentsDashboard({
   const [passcodeError, setPasscodeError] = useState('');
 
   // Custom Card Form State
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [cardName, setCardName] = useState('');
   const [cardDesc, setCardDesc] = useState('');
   const [cardRarity, setCardRarity] = useState<RarityType>('N');
@@ -147,23 +150,36 @@ export default function ParentsDashboard({
     }
   };
 
-  // Handle adding card
-  const handleCreateCard = (e: React.FormEvent) => {
+  // Handle adding or updating card
+  const handleSaveCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cardName.trim() || !cardDesc.trim()) return;
 
     const finalUrl = imageUrlType === 'template' ? selectedTemplateUrl : (uploadedImageData || CARD_TEMPLATES[0].url);
 
-    const newCard: Card = {
-      id: 'custom_' + Date.now(),
-      name: cardName,
-      description: cardDesc,
-      rarity: cardRarity,
-      imageUrl: finalUrl,
-      isCustom: true
-    };
-
-    onAddCustomCard(newCard);
+    if (editingCard) {
+      // Update existing card
+      const updatedCard: Card = {
+        ...editingCard,
+        name: cardName,
+        description: cardDesc,
+        rarity: cardRarity,
+        imageUrl: finalUrl,
+      };
+      onUpdateCustomCard(updatedCard);
+      setEditingCard(null);
+    } else {
+      // Create new card
+      const newCard: Card = {
+        id: 'custom_' + Date.now(),
+        name: cardName,
+        description: cardDesc,
+        rarity: cardRarity,
+        imageUrl: finalUrl,
+        isCustom: true
+      };
+      onAddCustomCard(newCard);
+    }
     
     // Clear form
     setCardName('');
@@ -171,6 +187,34 @@ export default function ParentsDashboard({
     setUploadedImageData('');
     setFormSuccess(true);
     setTimeout(() => setFormSuccess(false), 3000);
+  };
+
+  const startEditing = (card: Card) => {
+    setEditingCard(card);
+    setCardName(card.name);
+    setCardDesc(card.description);
+    setCardRarity(card.rarity);
+    // Check if image URL matches any template
+    const isTemplate = CARD_TEMPLATES.some(tpl => tpl.url === card.imageUrl);
+    if (isTemplate) {
+      setImageUrlType('template');
+      setSelectedTemplateUrl(card.imageUrl);
+      setUploadedImageData('');
+    } else {
+      setImageUrlType('upload');
+      setUploadedImageData(card.imageUrl);
+      setSelectedTemplateUrl(CARD_TEMPLATES[0].url);
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditingCard(null);
+    setCardName('');
+    setCardDesc('');
+    setCardRarity('N');
+    setImageUrlType('template');
+    setSelectedTemplateUrl(CARD_TEMPLATES[0].url);
+    setUploadedImageData('');
   };
 
   if (!isAuthenticated) {
@@ -405,14 +449,14 @@ export default function ParentsDashboard({
         {/* Form Column */}
         <div>
           <h3 className="text-base font-black text-rose-800 mb-2 flex items-center gap-2">
-            <Plus className="text-rose-500 animate-pulse" />
-            <span>🎨 ごほうびカードを新規登録する</span>
+            {editingCard ? <Pencil className="text-rose-500 animate-pulse" size={18} /> : <Plus className="text-rose-500 animate-pulse" size={18} />}
+            <span>{editingCard ? '✏️ ごほうびカードを修正する' : '🎨 ごほうびカードを新規登録する'}</span>
           </h3>
           <p className="text-xs text-slate-500 mb-6">
-            「お風呂を洗ってくれた！」「テストで100点！」など、オリジナルのカードを作ってガチャに混ぜることができます。
+            {editingCard ? '登録したカードの内容（名前、説明、イラスト、レア度）を書き換えることができます。' : '「お風呂を洗ってくれた！」「テストで100点！」など、オリジナルのカードを作ってガチャに混ぜることができます。'}
           </p>
 
-          <form onSubmit={handleCreateCard} className="flex flex-col gap-4">
+          <form onSubmit={handleSaveCard} className="flex flex-col gap-4">
             
             {/* Card Name */}
             <div>
@@ -560,17 +604,30 @@ export default function ParentsDashboard({
 
             {formSuccess && (
               <div className="p-2 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-lg text-center">
-                カードを登録したよ！ガチャから出るようになります。
+                {editingCard ? 'カードを修正したよ！' : 'カードを登録したよ！ガチャから出るようになります。'}
               </div>
             )}
 
-            <button
-              id="btn-register-card"
-              type="submit"
-              className="w-full py-2 bg-rose-600 text-white font-black text-xs rounded-xl hover:bg-rose-700 transition-colors shadow-sm"
-            >
-              カードを登録する！
-            </button>
+            <div className="flex gap-2">
+              {editingCard && (
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs rounded-xl transition-colors shadow-sm cursor-pointer"
+                >
+                  キャンセル
+                </button>
+              )}
+              <button
+                id="btn-register-card"
+                type="submit"
+                className={`py-2 text-white font-black text-xs rounded-xl transition-colors shadow-sm cursor-pointer ${
+                  editingCard ? 'flex-1 bg-indigo-600 hover:bg-indigo-700' : 'w-full bg-rose-600 hover:bg-rose-700'
+                }`}
+              >
+                {editingCard ? '変更を保存する' : 'カードを登録する！'}
+              </button>
+            </div>
           </form>
         </div>
 
@@ -603,13 +660,31 @@ export default function ParentsDashboard({
                     </div>
                     <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{card.description}</p>
                   </div>
-                  <button
-                    onClick={() => onDeleteCustomCard(card.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                    title="削除"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => startEditing(card)}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        editingCard?.id === card.id 
+                          ? 'text-indigo-600 bg-indigo-50' 
+                          : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                      }`}
+                      title="修正"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (editingCard?.id === card.id) {
+                          cancelEditing();
+                        }
+                        onDeleteCustomCard(card.id);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                      title="削除"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

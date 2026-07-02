@@ -312,6 +312,13 @@ export default function App() {
     }));
   };
 
+  const handleUpdateCustomCard = (updatedCard: Card) => {
+    setState(prev => ({
+      ...prev,
+      customCards: prev.customCards.map(c => c.id === updatedCard.id ? updatedCard : c)
+    }));
+  };
+
   const handleDeleteCustomCard = (cardId: string) => {
     setState(prev => ({
       ...prev,
@@ -749,6 +756,7 @@ export default function App() {
               gachaRates={state.gachaRates}
               onAddCustomCard={handleAddCustomCard}
               onDeleteCustomCard={handleDeleteCustomCard}
+              onUpdateCustomCard={handleUpdateCustomCard}
               onClearLogs={handleClearLogs}
               onResetCards={handleResetCards}
               onResetCoins={handleResetCoins}
