@@ -101,8 +101,8 @@ export default function ParentsDashboard({
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("画像ファイルは2MB以下にしてください。");
+      if (file.size > 5 * 1024 * 1024) {
+        alert("画像ファイルは5MB以下にしてください。");
         return;
       }
       const reader = new FileReader();
@@ -520,7 +520,7 @@ export default function ParentsDashboard({
                       />
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-400 font-bold">画像をアップロードしてください。2MB以下の画像が使用できます。</p>
+                    <p className="text-[10px] text-slate-400 font-bold">画像をアップロードしてください。5MB以下の画像が使用できます。</p>
                   )}
                 </div>
               )}
