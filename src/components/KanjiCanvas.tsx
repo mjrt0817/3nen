@@ -13,7 +13,7 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
   const [showGuide, setShowGuide] = useState(true);
   const [history, setHistory] = useState<string[]>([]); // for undo support
 
-  // Set up high DPI canvas
+  // Set up high DPI canvas & Native Scroll Prevention
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -35,6 +35,21 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
 
     // Save initial empty state
     setHistory([canvas.toDataURL()]);
+
+    // Native scroll lock on touch start/move on the canvas itself
+    const preventScroll = (e: TouchEvent) => {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    canvas.addEventListener('touchstart', preventScroll, { passive: false });
+    canvas.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchstart', preventScroll);
+      canvas.removeEventListener('touchmove', preventScroll);
+    };
   }, [targetKanji]);
 
   // Handle resizing or viewport adjustments
@@ -183,11 +198,11 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full">
+    <div className="flex flex-col items-center gap-4 w-full pb-12">
       {/* Dashed Kanji box */}
       <div 
         id="kanji-drawing-container"
-        className="relative w-full max-w-[280px] sm:max-w-[360px] aspect-square border-4 border-emerald-400 bg-white rounded-2xl shadow-md overflow-hidden select-none touch-none"
+        className="relative w-full max-w-[310px] sm:max-w-[390px] aspect-square border-4 border-emerald-400 bg-white rounded-3xl shadow-md overflow-hidden select-none touch-none"
         style={{ touchAction: 'none' }}
       >
         {/* Dashed vertical and horizontal lines for Japanese Kanji grid */}
@@ -199,7 +214,7 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
         {/* Faint model character guide behind the canvas */}
         {showGuide && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-bold text-slate-100 select-none">
-            <span className="text-[200px] sm:text-[280px] leading-none" style={{ fontFamily: '"Klee One", "Yu Mincho", "Noto Serif JP", serif' }}>
+            <span className="text-[220px] sm:text-[310px] leading-none" style={{ fontFamily: '"Klee One", "Yu Mincho", "Noto Serif JP", serif' }}>
               {targetKanji}
             </span>
           </div>
@@ -220,26 +235,26 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
         />
       </div>
 
-      {/* Handwriting controls */}
-      <div className="flex gap-2">
+      {/* Handwriting controls with child-friendly padding and touch support */}
+      <div className="flex gap-2.5 sm:gap-4 mt-1 pb-2">
         <button
           id="btn-toggle-guide"
           onClick={() => setShowGuide(!showGuide)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-black rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all active:scale-95 cursor-pointer touch-manipulation shadow-sm"
           title={showGuide ? "お手本をかくす" : "お手本をだす"}
         >
-          {showGuide ? <EyeOff size={14} /> : <Eye size={14} />}
-          {showGuide ? "おてほんを隠す" : "おてほんを表示"}
+          {showGuide ? <EyeOff size={16} /> : <Eye size={16} />}
+          {showGuide ? "おてほんを隠す" : "おてほん表示"}
         </button>
 
         <button
           id="btn-undo-stroke"
           onClick={undoLast}
           disabled={history.length <= 1 || disabled}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-black rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer touch-manipulation shadow-sm"
           title="1つもどす"
         >
-          <RotateCcw size={14} />
+          <RotateCcw size={16} />
           <span>もどす</span>
         </button>
 
@@ -247,10 +262,10 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
           id="btn-clear-canvas"
           onClick={clearCanvas}
           disabled={disabled}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-black rounded-xl bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer touch-manipulation shadow-sm"
           title="ぜんぶ消す"
         >
-          <Trash2 size={14} />
+          <Trash2 size={16} />
           <span>消す</span>
         </button>
       </div>

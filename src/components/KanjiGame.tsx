@@ -203,7 +203,7 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
   const correctCount = sessionLogs.filter((log) => log.isCorrect).length;
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl border-4 border-emerald-200 p-6 shadow-sm">
+    <div className="w-full max-w-3xl mx-auto bg-white rounded-3xl border-4 border-emerald-200 p-6 sm:p-8 shadow-sm pb-12">
       {!isFinished ? (
         /* Active Writing Screen */
         <div className="flex flex-col">
@@ -237,7 +237,7 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
           </div>
 
           {/* Split Panel: Canvas & Controls / Guides */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {/* Left: The Handwriting Canvas */}
             <div className="flex flex-col items-center w-full">
               {gradingResult && capturedImage ? (
