@@ -120,7 +120,11 @@ export default function App() {
       const userDocRef = doc(db, 'users', user.uid);
       setDoc(userDocRef, state).catch(e => console.error("Firestore write error:", e));
     } else {
-      localStorage.setItem('study_app_state', JSON.stringify(state));
+      try {
+        localStorage.setItem('study_app_state', JSON.stringify(state));
+      } catch (e) {
+        console.error("Local storage write error:", e);
+      }
     }
   }, [state, user, isSyncing]);
 

@@ -108,7 +108,39 @@ export default function ParentsDashboard({
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
-          setUploadedImageData(reader.result);
+          const img = new Image();
+          img.src = reader.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxDim = 400; // Resize to max 400px to keep it compact
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              // Save as highly compressed but clear JPEG
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              setUploadedImageData(compressedDataUrl);
+            } else {
+              setUploadedImageData(reader.result as string);
+            }
+          };
+          img.onerror = () => {
+            setUploadedImageData(reader.result as string);
+          };
         }
       };
       reader.readAsDataURL(file);
