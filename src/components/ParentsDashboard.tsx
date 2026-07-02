@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Card, LearningLog, RarityType } from '../types';
-import { Plus, Trash2, Heart, ShieldCheck, AlertTriangle, CheckCircle2, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { Card, LearningLog, RarityType, GachaRates } from '../types';
+import { Plus, Trash2, Heart, ShieldCheck, AlertTriangle, CheckCircle2, TrendingUp, Sparkles, BookOpen, Coins, Beaker } from 'lucide-react';
 
 interface ParentsDashboardProps {
   learningLogs: LearningLog[];
   customCards: Card[];
   unlockedCardIds: string[];
   currentStreak: number;
+  gachaRates?: GachaRates;
   onAddCustomCard: (card: Card) => void;
   onDeleteCustomCard: (cardId: string) => void;
-  onClearLogs?: () => void;
+  onClearLogs: () => void;
+  onResetCards: () => void;
+  onResetCoins: () => void;
+  onAddCoinsTest: () => void;
+  onChangeGachaRates: (rates: GachaRates) => void;
 }
 
 const CARD_TEMPLATES = [
@@ -25,9 +30,14 @@ export default function ParentsDashboard({
   customCards,
   unlockedCardIds,
   currentStreak,
+  gachaRates,
   onAddCustomCard,
   onDeleteCustomCard,
-  onClearLogs
+  onClearLogs,
+  onResetCards,
+  onResetCoins,
+  onAddCoinsTest,
+  onChangeGachaRates
 }: ParentsDashboardProps) {
   
   // Passcode Lock State
@@ -652,6 +662,111 @@ export default function ParentsDashboard({
             まだ学習履歴がありません。勉強をはじめましょう！
           </div>
         )}
+      </div>
+
+      {/* Test & Settings Panel */}
+      <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col gap-1 mb-6 border-b border-slate-100 pb-4">
+          <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+            <Beaker size={18} className="text-purple-600" />
+            🔧 テスト機能・データリセット
+          </h3>
+          <p className="text-xs text-slate-500">
+            図鑑やコインの初期化、テスト用のコイン追加、ガチャの確率設定などを行います。
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Reset Controls */}
+          <div className="flex flex-col gap-3">
+            <h4 className="text-xs font-black text-slate-700 border-b border-slate-100 pb-2">データリセット</h4>
+            
+            <button
+              onClick={() => {
+                if(window.confirm('学習記録をすべて消去しますか？（※コインや図鑑はそのままです）')) {
+                  onClearLogs();
+                }
+              }}
+              className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-all flex items-center justify-between cursor-pointer"
+            >
+              <span>学習記録をリセット</span>
+              <Trash2 size={14} />
+            </button>
+
+            <button
+              onClick={() => {
+                if(window.confirm('集めたカード（図鑑）をすべてリセットしますか？')) {
+                  onResetCards();
+                }
+              }}
+              className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-all flex items-center justify-between cursor-pointer"
+            >
+              <span>図鑑（カード）をリセット</span>
+              <Trash2 size={14} />
+            </button>
+
+            <button
+              onClick={() => {
+                if(window.confirm('コインを0枚にリセットしますか？')) {
+                  onResetCoins();
+                }
+              }}
+              className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-all flex items-center justify-between cursor-pointer"
+            >
+              <span>コインをリセット</span>
+              <Trash2 size={14} />
+            </button>
+          </div>
+
+          {/* Test Tools */}
+          <div className="flex flex-col gap-3">
+            <h4 className="text-xs font-black text-slate-700 border-b border-slate-100 pb-2">テスト機能</h4>
+            
+            <button
+              onClick={() => {
+                if(window.confirm('テスト用にコインを100枚追加しますか？')) {
+                  onAddCoinsTest();
+                }
+              }}
+              className="px-4 py-2 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-all flex items-center justify-between cursor-pointer"
+            >
+              <span>コインを+100枚増やす</span>
+              <Coins size={14} />
+            </button>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 mt-2">
+              <span className="text-[10px] font-black text-slate-600">ガチャの出現率（％）</span>
+              
+              {['UR', 'SSR', 'SR', 'R', 'N'].map(r => {
+                const rarity = r as RarityType;
+                return (
+                  <div key={rarity} className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span className="w-8">{rarity}</span>
+                    <input 
+                      type="number"
+                      value={gachaRates?.[rarity] ?? (rarity === 'UR' ? 2.5 : rarity === 'SSR' ? 7.5 : rarity === 'SR' ? 15 : rarity === 'R' ? 25 : 50)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        const current = gachaRates || { UR: 2.5, SSR: 7.5, SR: 15, R: 25, N: 50 };
+                        onChangeGachaRates({ ...current, [rarity]: val });
+                      }}
+                      className="w-16 px-2 py-1 text-right border border-slate-300 rounded focus:border-indigo-400 focus:outline-none"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                    />
+                    <span className="text-slate-400 ml-1">%</span>
+                  </div>
+                )
+              })}
+              
+              <div className="text-[10px] text-slate-400 font-bold mt-1 text-right">
+                合計: {Object.values(gachaRates || { UR: 2.5, SSR: 7.5, SR: 15, R: 25, N: 50 }).reduce((a,b)=>a+b, 0).toFixed(1)}%
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
 
     </div>

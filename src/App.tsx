@@ -317,9 +317,23 @@ export default function App() {
   };
 
   const handleClearLogs = () => {
-    if (window.confirm('これまでの学習データをリセットしますか？')) {
-      setState(INITIAL_STATE);
-    }
+    setState(prev => ({ ...prev, learningLogs: [] }));
+  };
+
+  const handleResetCards = () => {
+    setState(prev => ({ ...prev, unlockedCardIds: [] }));
+  };
+
+  const handleResetCoins = () => {
+    setState(prev => ({ ...prev, coins: 0 }));
+  };
+
+  const handleAddCoinsTest = () => {
+    setState(prev => ({ ...prev, coins: prev.coins + 100 }));
+  };
+
+  const handleChangeGachaRates = (rates: any) => {
+    setState(prev => ({ ...prev, gachaRates: rates }));
   };
 
   const renderBadgeIcon = (iconName: string) => {
@@ -657,6 +671,7 @@ export default function App() {
               coins={state.coins}
               unlockedCardIds={state.unlockedCardIds}
               customCards={state.customCards}
+              gachaRates={state.gachaRates}
               onDrawCard={handleDrawCard}
               onNavigateToAlbum={() => setActiveTab('album')}
             />
@@ -727,9 +742,14 @@ export default function App() {
               customCards={state.customCards}
               unlockedCardIds={state.unlockedCardIds}
               currentStreak={state.currentStreak}
+              gachaRates={state.gachaRates}
               onAddCustomCard={handleAddCustomCard}
               onDeleteCustomCard={handleDeleteCustomCard}
               onClearLogs={handleClearLogs}
+              onResetCards={handleResetCards}
+              onResetCoins={handleResetCoins}
+              onAddCoinsTest={handleAddCoinsTest}
+              onChangeGachaRates={handleChangeGachaRates}
             />
           )}
 

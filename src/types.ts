@@ -18,6 +18,8 @@ export interface LearningLog {
 
 export type RarityType = 'N' | 'R' | 'SR' | 'SSR' | 'UR';
 
+export type GachaRates = Record<RarityType, number>;
+
 export interface Card {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ export interface StudentState {
   lastStudyDate: string | null; // YYYY-MM-DD
   unlockedBadgeIds: string[];
   childName?: string; // Custom child name for the app
+  gachaRates?: GachaRates; // Test feature to adjust drop rates
 }
 
 export interface ArithmeticQuestion {

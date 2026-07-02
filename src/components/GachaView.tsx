@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Card, RarityType } from '../types';
+import { Card, RarityType, GachaRates } from '../types';
 import { DEFAULT_CARDS } from '../data';
 import { Coins, Sparkles, Trophy, Grid3X3, Image as ImageIcon } from 'lucide-react';
 
@@ -8,6 +8,7 @@ interface GachaViewProps {
   coins: number;
   unlockedCardIds: string[];
   customCards: Card[];
+  gachaRates?: GachaRates;
   onDrawCard: (card: Card, cost: number) => void;
   onNavigateToAlbum: () => void;
 }
@@ -84,7 +85,7 @@ const playSound = (type: 'lever' | 'capsule' | 'reveal' | 'rare' | 'super_rare')
   }
 };
 
-export default function GachaView({ coins, unlockedCardIds, customCards, onDrawCard, onNavigateToAlbum }: GachaViewProps) {
+export default function GachaView({ coins, unlockedCardIds, customCards, gachaRates, onDrawCard, onNavigateToAlbum }: GachaViewProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [activeCapsule, setActiveCapsule] = useState<string | null>(null); // 'N', 'R', 'SR', 'SSR', 'UR'
   const [revealedCard, setRevealedCard] = useState<Card | null>(null);
@@ -111,17 +112,26 @@ export default function GachaView({ coins, unlockedCardIds, customCards, onDrawC
     setRevealedCard(null);
     setActiveCapsule(null);
 
-    // Pick a card based on typical gacha weights:
-    // UR: 2.5%, SSR: 7.5%, SR: 15%, R: 25%, N: 50%
+    // Pick a card based on custom or typical gacha weights:
+    const rates = gachaRates || { UR: 2.5, SSR: 7.5, SR: 15, R: 25, N: 50 };
+    const totalWeight = rates.UR + rates.SSR + rates.SR + rates.R + rates.N;
+    
+    // Normalize to 100 in case the parent set them differently
+    const normalizedUR = (rates.UR / totalWeight) * 100;
+    const normalizedSSR = (rates.SSR / totalWeight) * 100;
+    const normalizedSR = (rates.SR / totalWeight) * 100;
+    const normalizedR = (rates.R / totalWeight) * 100;
+
     const rand = Math.random() * 100;
     let targetRarity: RarityType = 'N';
-    if (rand > 97.5) {
+    
+    if (rand < normalizedUR) {
       targetRarity = 'UR';
-    } else if (rand > 90.0) {
+    } else if (rand < normalizedUR + normalizedSSR) {
       targetRarity = 'SSR';
-    } else if (rand > 75.0) {
+    } else if (rand < normalizedUR + normalizedSSR + normalizedSR) {
       targetRarity = 'SR';
-    } else if (rand > 50.0) {
+    } else if (rand < normalizedUR + normalizedSSR + normalizedSR + normalizedR) {
       targetRarity = 'R';
     }
 
