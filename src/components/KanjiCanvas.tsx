@@ -10,7 +10,7 @@ interface KanjiCanvasProps {
 export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }: KanjiCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [showGuide, setShowGuide] = useState(true);
+  const [showGuide, setShowGuide] = useState(false);
   const [history, setHistory] = useState<string[]>([]); // for undo support
 
   // Set up high DPI canvas & Native Scroll Prevention

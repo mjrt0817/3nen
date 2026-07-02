@@ -241,7 +241,7 @@ export const ARITHMETIC_QUESTIONS: ArithmeticQuestion[] = [
     operator: '+',
     questionText: '0.3 ＋ 0.4 はいくつかな？',
     correctAnswer: 7, // will map to 0.7
-    options: [0.1, 0.5, 0.7, 1.2], // custom handling in UI
+    options: [1, 5, 7, 9], // maps to 0.1, 0.5, 0.7, 0.9 in UI
     hint: '0.1が、3個と4個あるから、あわせて何個かな？',
   }
 ];
