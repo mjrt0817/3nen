@@ -359,7 +359,7 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
               className="flex flex-col items-center w-full px-4"
             >
               {/* Trading Card Frame */}
-              <div className={`w-[200px] h-[270px] border-4 rounded-2xl p-2.5 flex flex-col items-center relative overflow-hidden ${getRarityCardStyle(revealedCard.rarity)}`}>
+              <div className={`w-[200px] h-auto border-4 rounded-2xl p-2.5 flex flex-col items-center relative overflow-hidden ${getRarityCardStyle(revealedCard.rarity)}`}>
                 
                 {/* Sparkle badge */}
                 {revealedCard.rarity === 'UR' && (
@@ -390,13 +390,13 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
 
                 {/* Custom Card indicator */}
                 {revealedCard.isCustom && (
-                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold py-0.5 px-1.5 rounded">
+                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold py-0.5 px-1.5 rounded z-10">
                     おうち作
                   </div>
                 )}
 
                 {/* Image */}
-                <div className="w-full h-[120px] bg-slate-100 rounded-xl overflow-hidden mb-2 shadow-inner border border-slate-200">
+                <div className="w-full aspect-[63/88] bg-slate-100 rounded-xl overflow-hidden mb-2 shadow-inner border border-slate-200">
                   <img
                     src={revealedCard.imageUrl}
                     alt={revealedCard.name}
@@ -416,7 +416,7 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
                 </span>
 
                 {/* Description */}
-                <p className="text-[10px] text-slate-600 leading-tight text-center overflow-y-auto h-[60px] w-full px-1 scrollbar-none">
+                <p className="text-[10px] text-slate-600 leading-tight text-center w-full px-1">
                   {revealedCard.description}
                 </p>
               </div>

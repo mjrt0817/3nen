@@ -11,6 +11,7 @@ interface AlbumViewProps {
 export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewProps) {
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'custom'>('all');
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
   const allCards = [...DEFAULT_CARDS, ...customCards];
   const unlockedCount = allCards.filter(c => unlockedCardIds.includes(c.id)).length;
@@ -124,16 +125,15 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
             <div
               key={card.id}
               onClick={isUnlocked ? () => setSelectedCard(card) : undefined}
-              className={`border-2 rounded-2xl p-2 flex flex-col items-center justify-between text-center transition-all ${
+              className={`border-2 rounded-2xl p-2 flex flex-col items-center justify-between text-center transition-all h-full ${
                 isUnlocked ? 'cursor-pointer hover:scale-105 active:scale-95' : 'opacity-80'
               } ${getBorderColor(card.rarity, isUnlocked)}`}
-              style={{ height: '220px' }}
             >
               {isUnlocked ? (
                 /* Unlocked Card Preview */
                 <>
                   {/* Image */}
-                  <div className="w-full h-[100px] rounded-xl overflow-hidden mb-2 bg-slate-100 relative">
+                  <div className="w-full aspect-[63/88] rounded-xl overflow-hidden mb-2 bg-slate-100 relative">
                     {card.isCustom && (
                       <span className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">
                         おうち
@@ -182,6 +182,21 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
         )}
       </div>
 
+      {/* Full Screen Image Modal */}
+      {fullScreenImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 cursor-zoom-out"
+          onClick={() => setFullScreenImage(null)}
+        >
+          <img 
+            src={fullScreenImage} 
+            alt="Full screen view" 
+            className="max-w-full max-h-full object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      )}
+
       {/* Card Detail Dialog / Modal */}
       {selectedCard && (
         <div 
@@ -215,12 +230,16 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
               </span>
             )}
 
-            {/* Large Image */}
-            <div className="w-full h-[180px] rounded-2xl overflow-hidden bg-slate-100 mb-4 border border-slate-200 shadow-inner">
+            {/* Large Image - Click to full screen */}
+            <div 
+              className="w-full aspect-[63/88] max-h-[50vh] rounded-2xl overflow-hidden bg-slate-100 mb-4 border border-slate-200 shadow-inner cursor-zoom-in hover:opacity-90 transition-opacity"
+              onClick={() => setFullScreenImage(selectedCard.imageUrl)}
+              title="タップして拡大"
+            >
               <img
                 src={selectedCard.imageUrl}
                 alt={selectedCard.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-black/5"
                 referrerPolicy="no-referrer"
               />
             </div>
