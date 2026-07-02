@@ -310,81 +310,82 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
 
               {/* Action Grading Button or Self-Grading Options */}
               {!gradingResult && (
-                !capturedImage ? (
-                  <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 text-center text-xs text-slate-500 font-bold">
-                    <p>📝 なぞり書きが終わったら、自分で採点するか、AI先生にみてもらおう！</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {/* Self Grade Section */}
-                    <div className="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 flex flex-col gap-2">
-                      <span className="text-xs font-black text-emerald-800 flex items-center gap-1">
-                        💮 じぶんで採点（じこひょうか）
-                      </span>
-                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                        お手本と見比べて、じぶんで点数をつけよう！
-                      </p>
-                      
-                      <div className="grid grid-cols-3 gap-2 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleSelfGrade('perfect')}
-                          className="py-2.5 px-1 bg-teal-500 hover:bg-teal-600 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <span className="text-sm">💮</span>
-                          <span>はなまる</span>
-                          <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+10枚</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSelfGrade('good')}
-                          className="py-2.5 px-1 bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <span className="text-sm">⭕</span>
-                          <span>よくできた</span>
-                          <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+8枚</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSelfGrade('retry')}
-                          className="py-2.5 px-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <span className="text-sm">🔺</span>
-                          <span>もうすこし</span>
-                          <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+5枚</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="text-center font-black text-slate-300 text-xs my-0.5">または</div>
-
-                    {/* AI Grade Section */}
-                    <button
-                      id="btn-submit-kanji"
-                      type="button"
-                      onClick={handleGrade}
-                      disabled={isGrading}
-                      className="w-full py-3.5 rounded-2xl font-black text-xs text-white shadow-md transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
-                    >
-                      {isGrading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>AIせんせいが採点中...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={14} className="text-amber-300 animate-pulse" />
-                          <span>AIせんせいのとくべつ採点！</span>
-                        </>
-                      )}
-                    </button>
-                    <p className="text-[9px] text-center text-slate-400 font-bold">
-                      ※AIが形をみて、ハネやトメの個別アドバイスをおくります
+                <div className="flex flex-col gap-3 w-full">
+                  {/* Self Grade Section */}
+                  <div className={`bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 flex flex-col gap-2 transition-all duration-300 ${!capturedImage ? 'opacity-65' : 'opacity-100'}`}>
+                    <span className="text-xs font-black text-emerald-800 flex items-center gap-1">
+                      💮 じぶんで採点（じこひょうか）
+                    </span>
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                      {!capturedImage ? '🖊️ まずは白い箱に漢字を書いてみてね！' : 'お手本と見比べて、じぶんで点数をつけよう！'}
                     </p>
+                    
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => capturedImage && handleSelfGrade('perfect')}
+                        disabled={!capturedImage}
+                        className={`py-2.5 px-1 bg-teal-500 hover:bg-teal-600 disabled:bg-slate-200 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs ${capturedImage ? 'active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                      >
+                        <span className="text-sm">💮</span>
+                        <span>はなまる</span>
+                        <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+10枚</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => capturedImage && handleSelfGrade('good')}
+                        disabled={!capturedImage}
+                        className={`py-2.5 px-1 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs ${capturedImage ? 'active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                      >
+                        <span className="text-sm">⭕</span>
+                        <span>よくできた</span>
+                        <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+8枚</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => capturedImage && handleSelfGrade('retry')}
+                        disabled={!capturedImage}
+                        className={`py-2.5 px-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 text-white font-black text-[11px] rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-xs ${capturedImage ? 'active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                      >
+                        <span className="text-sm">🔺</span>
+                        <span>もうすこし</span>
+                        <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5 font-bold font-mono">+5枚</span>
+                      </button>
+                    </div>
                   </div>
-                )
+
+                  <div className="text-center font-black text-slate-300 text-xs my-0.5">または</div>
+
+                  {/* AI Grade Section */}
+                  <button
+                    id="btn-submit-kanji"
+                    type="button"
+                    onClick={handleGrade}
+                    disabled={isGrading || !capturedImage}
+                    className={`w-full py-3.5 rounded-2xl font-black text-xs text-white shadow-md transition-all flex items-center justify-center gap-2 ${
+                      !capturedImage 
+                        ? 'bg-slate-300 cursor-not-allowed opacity-60' 
+                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-[0.98] cursor-pointer'
+                    }`}
+                  >
+                    {isGrading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>AIせんせいが採点中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} className="text-amber-300 animate-pulse" />
+                        <span>AIせんせいのとくべつ採点！</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[9px] text-center text-slate-400 font-bold">
+                    ※AIが形をみて、ハネやトメの個別アドバイスをおくります
+                  </p>
+                </div>
               )}
 
               {/* Display Grading Result from AI */}

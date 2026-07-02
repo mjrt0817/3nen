@@ -83,6 +83,27 @@ export default function KanjiCanvas({ targetKanji, onCapture, disabled = false }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Freeze screen scrolling when drawing is active to support children on mobile
+  useEffect(() => {
+    if (isDrawing) {
+      const preventDefault = (e: TouchEvent) => {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      };
+
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      window.addEventListener('touchmove', preventDefault, { passive: false });
+
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        window.removeEventListener('touchmove', preventDefault);
+      };
+    }
+  }, [isDrawing]);
+
   // Helper to get drawing coordinates
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {
     const canvas = canvasRef.current;
