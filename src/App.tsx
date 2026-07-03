@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from 'motion/react';
 // Firebase imports
 import { auth, db, googleProvider, signInWithPopup, signOut } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, deleteDoc } from 'firebase/firestore';
 
 // Default initial state
 const INITIAL_STATE: StudentState = {
@@ -80,28 +80,18 @@ export default function App() {
           if (docSnap.exists()) {
             const cloudData = docSnap.data() as StudentState;
             setState(prev => {
+              // Upload local custom cards to subcollection if they exist locally
+              if (prev.customCards && prev.customCards.length > 0) {
+                prev.customCards.forEach((card) => {
+                  const cardDocRef = doc(db, 'users', currentUser.uid, 'customCards', card.id);
+                  setDoc(cardDocRef, card).catch(e => console.error("Error uploading offline custom card:", e));
+                });
+              }
+
               const merged: StudentState = {
                 coins: cloudData.coins !== undefined ? Math.max(prev.coins, cloudData.coins) : prev.coins,
                 unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
-                customCards: (() => {
-                  const localCards = prev.customCards || [];
-                  const cloudCards = cloudData.customCards || [];
-                  const cardMap = new Map<string, Card>();
-
-                  // First, add all local cards to the map
-                  localCards.forEach(c => cardMap.set(c.id, c));
-
-                  // Overwrite or add from cloud if cloud has a newer or same timestamp,
-                  // or if it doesn't exist locally.
-                  cloudCards.forEach(c => {
-                    const existing = cardMap.get(c.id);
-                    if (!existing || (c.updatedAt || 0) > (existing.updatedAt || 0)) {
-                      cardMap.set(c.id, c);
-                    }
-                  });
-
-                  return Array.from(cardMap.values());
-                })(),
+                customCards: prev.customCards, // Will be managed in real-time by the listener below
                 learningLogs: [
                   ...prev.learningLogs,
                   ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))
@@ -114,14 +104,24 @@ export default function App() {
                 gachaRates: cloudData.gachaRates || prev.gachaRates,
               };
 
-              // Sync back merged state once
-              setDoc(userDocRef, merged).catch(e => console.error("Firestore sync back error:", e));
+              // Sync back merged state once (excluding customCards to avoid overwriting)
+              const { customCards, ...stateToWrite } = merged;
+              setDoc(userDocRef, stateToWrite).catch(e => console.error("Firestore sync back error:", e));
               return merged;
             });
           } else {
-            // Document doesn't exist, create it with local state
+            // Document doesn't exist, create it with local state (excluding customCards)
             setState(current => {
-              setDoc(userDocRef, current).catch(e => console.error("Initial setDoc error:", e));
+              const { customCards, ...stateToWrite } = current;
+              setDoc(userDocRef, stateToWrite).catch(e => console.error("Initial setDoc error:", e));
+              
+              // Upload local custom cards if any exist
+              if (current.customCards && current.customCards.length > 0) {
+                current.customCards.forEach((card) => {
+                  const cardDocRef = doc(db, 'users', currentUser.uid, 'customCards', card.id);
+                  setDoc(cardDocRef, card).catch(e => console.error("Error uploading offline custom card:", e));
+                });
+              }
               return current;
             });
           }
@@ -138,12 +138,47 @@ export default function App() {
     };
   }, []);
 
+  // 1b. Real-time custom cards subscription when logged in
+  useEffect(() => {
+    if (!user) return;
+
+    const customCardsRef = collection(db, 'users', user.uid, 'customCards');
+    const unsubscribeSnapshot = onSnapshot(customCardsRef, (snapshot) => {
+      const cards: Card[] = [];
+      snapshot.forEach((docSnap) => {
+        cards.push(docSnap.data() as Card);
+      });
+
+      // Sort custom cards by creation/updated date or ID to maintain a consistent UI list
+      cards.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+      setState(prev => {
+        // Prevent redundant state updates if data is structurally identical
+        if (JSON.stringify(prev.customCards) === JSON.stringify(cards)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          customCards: cards
+        };
+      });
+    }, (error) => {
+      console.error("Firestore custom cards snapshot subscription error:", error);
+    });
+
+    return () => {
+      unsubscribeSnapshot();
+    };
+  }, [user]);
+
   // 2. Sync state to localstorage or firestore whenever it changes
   useEffect(() => {
     if (isSyncing) return;
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
-      setDoc(userDocRef, state).catch(e => console.error("Firestore write error:", e));
+      // EXCLUDE customCards from the root document write so they are never overwritten
+      const { customCards, ...stateToWrite } = state;
+      setDoc(userDocRef, stateToWrite).catch(e => console.error("Firestore write error:", e));
     } else {
       try {
         localStorage.setItem('study_app_state', JSON.stringify(state));
@@ -330,26 +365,53 @@ export default function App() {
     });
   };
 
-  const handleAddCustomCard = (newCard: Card) => {
+  const handleAddCustomCard = async (newCard: Card) => {
     setState(prev => ({
       ...prev,
       customCards: [...prev.customCards, newCard]
     }));
+
+    if (user) {
+      try {
+        const cardDocRef = doc(db, 'users', user.uid, 'customCards', newCard.id);
+        await setDoc(cardDocRef, newCard);
+      } catch (e) {
+        console.error("Firestore add custom card error:", e);
+      }
+    }
   };
 
-  const handleUpdateCustomCard = (updatedCard: Card) => {
+  const handleUpdateCustomCard = async (updatedCard: Card) => {
     setState(prev => ({
       ...prev,
       customCards: prev.customCards.map(c => c.id === updatedCard.id ? updatedCard : c)
     }));
+
+    if (user) {
+      try {
+        const cardDocRef = doc(db, 'users', user.uid, 'customCards', updatedCard.id);
+        await setDoc(cardDocRef, updatedCard);
+      } catch (e) {
+        console.error("Firestore update custom card error:", e);
+      }
+    }
   };
 
-  const handleDeleteCustomCard = (cardId: string) => {
+  const handleDeleteCustomCard = async (cardId: string) => {
     setState(prev => ({
       ...prev,
       customCards: prev.customCards.filter(c => c.id !== cardId),
       unlockedCardIds: prev.unlockedCardIds.filter(id => id !== cardId)
     }));
+
+    if (user) {
+      try {
+        const cardDocRef = doc(db, 'users', user.uid, 'customCards', cardId);
+        await deleteDoc(cardDocRef);
+      } catch (e) {
+        console.error("Firestore delete custom card error:", e);
+      }
+    }
   };
 
   const handleClearLogs = () => {
