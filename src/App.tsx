@@ -59,9 +59,6 @@ export default function App() {
   const [activeDrill, setActiveDrill] = useState<'none' | 'math' | 'kanji'>('none');
   const [newBadgeUnlocked, setNewBadgeUnlocked] = useState<Badge | null>(null);
 
-  // Ref to skip sync-back when local state was updated by incoming cloud changes
-  const skipNextSyncRef = useRef(false);
-
   // Firebase User Auth State
   const [user, setUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -69,69 +66,53 @@ export default function App() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
 
-  // 1. Auth State & Firestore Sync Listener with Real-Time onSnapshot
+  // 1. Auth State & Firestore Sync (One-time fetch and merge on login)
   useEffect(() => {
-    let unsubscribeSnapshot: (() => void) | null = null;
-
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-        unsubscribeSnapshot = null;
-      }
 
       if (currentUser) {
         setIsSyncing(true);
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
-          
-          // Use real-time snapshot listener
-          unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-              // Only update local state if the update comes from server/other device (not our own pending writes)
-              if (!docSnap.metadata.hasPendingWrites) {
-                const cloudData = docSnap.data() as StudentState;
-                setState(prev => {
-                  const merged: StudentState = {
-                    coins: cloudData.coins !== undefined ? cloudData.coins : prev.coins,
-                    unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
-                    customCards: [
-                      ...(cloudData.customCards || []),
-                      ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
-                    ],
-                    learningLogs: [
-                      ...prev.learningLogs,
-                      ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))
-                    ].sort((a, b) => b.timestamp - a.timestamp),
-                    currentStreak: Math.max(prev.currentStreak, cloudData.currentStreak || 0),
-                    longestStreak: Math.max(prev.longestStreak, cloudData.longestStreak || 0),
-                    lastStudyDate: prev.lastStudyDate || cloudData.lastStudyDate || null,
-                    unlockedBadgeIds: Array.from(new Set([...prev.unlockedBadgeIds, ...(cloudData.unlockedBadgeIds || [])])),
-                    childName: cloudData.childName || prev.childName,
-                    gachaRates: cloudData.gachaRates || prev.gachaRates,
-                  };
+          const docSnap = await getDoc(userDocRef);
 
-                  // Dual safety: string comparison prevents redundant state updates and potential loops
-                  if (JSON.stringify(prev) === JSON.stringify(merged)) {
-                    return prev;
-                  }
+          if (docSnap.exists()) {
+            const cloudData = docSnap.data() as StudentState;
+            setState(prev => {
+              const merged: StudentState = {
+                coins: cloudData.coins !== undefined ? Math.max(prev.coins, cloudData.coins) : prev.coins,
+                unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
+                customCards: [
+                  ...(cloudData.customCards || []),
+                  ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
+                ],
+                learningLogs: [
+                  ...prev.learningLogs,
+                  ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))
+                ].sort((a, b) => b.timestamp - a.timestamp),
+                currentStreak: Math.max(prev.currentStreak, cloudData.currentStreak || 0),
+                longestStreak: Math.max(prev.longestStreak, cloudData.longestStreak || 0),
+                lastStudyDate: prev.lastStudyDate || cloudData.lastStudyDate || null,
+                unlockedBadgeIds: Array.from(new Set([...prev.unlockedBadgeIds, ...(cloudData.unlockedBadgeIds || [])])),
+                childName: cloudData.childName || prev.childName,
+                gachaRates: cloudData.gachaRates || prev.gachaRates,
+              };
 
-                  skipNextSyncRef.current = true;
-                  return merged;
-                });
-              }
-            } else {
-              // Create initial record in Firestore with local state
-              setDoc(userDocRef, state).catch(e => console.error("Initial setDoc error:", e));
-            }
-            setIsSyncing(false);
-          }, (error) => {
-            console.error("Firestore snapshot error:", error);
-            setIsSyncing(false);
-          });
+              // Sync back merged state once
+              setDoc(userDocRef, merged).catch(e => console.error("Firestore sync back error:", e));
+              return merged;
+            });
+          } else {
+            // Document doesn't exist, create it with local state
+            setState(current => {
+              setDoc(userDocRef, current).catch(e => console.error("Initial setDoc error:", e));
+              return current;
+            });
+          }
         } catch (e) {
-          console.error("Firestore sync setup error:", e);
+          console.error("Firestore initial load error:", e);
+        } finally {
           setIsSyncing(false);
         }
       }
@@ -139,19 +120,12 @@ export default function App() {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-      }
     };
   }, []);
 
   // 2. Sync state to localstorage or firestore whenever it changes
   useEffect(() => {
     if (isSyncing) return;
-    if (skipNextSyncRef.current) {
-      skipNextSyncRef.current = false;
-      return;
-    }
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
       setDoc(userDocRef, state).catch(e => console.error("Firestore write error:", e));
