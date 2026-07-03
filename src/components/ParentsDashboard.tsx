@@ -19,11 +19,11 @@ interface ParentsDashboardProps {
 }
 
 const CARD_TEMPLATES = [
-  { name: 'しば犬おまわりさん 🐕', url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&auto=format&fit=crop&q=80' },
-  { name: 'レインボードラゴン 🐉', url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&auto=format&fit=crop&q=80' },
-  { name: 'おてつだいロボ 🤖', url: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=300&auto=format&fit=crop&q=80' },
-  { name: 'きらきらネコプリンセス 🐱', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&auto=format&fit=crop&q=80' },
-  { name: 'ゴールド王冠 👑', url: 'https://images.unsplash.com/photo-1578269174936-2709b5a5e06e?w=300&auto=format&fit=crop&q=80' },
+  { name: 'しば犬おまわりさん 🐕', url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=1200&auto=format&fit=crop&q=80' },
+  { name: 'レインボードラゴン 🐉', url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&auto=format&fit=crop&q=80' },
+  { name: 'おてつだいロボ 🤖', url: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200&auto=format&fit=crop&q=80' },
+  { name: 'きらきらネコプリンセス 🐱', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80' },
+  { name: 'ゴールド王冠 👑', url: 'https://images.unsplash.com/photo-1578269174936-2709b5a5e06e?w=1200&auto=format&fit=crop&q=80' },
 ];
 
 export default function ParentsDashboard({
@@ -115,7 +115,7 @@ export default function ParentsDashboard({
           img.src = reader.result;
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const maxDim = 400; // Resize to max 400px to keep it compact
+            const maxDim = 1200; // Resize to max 1200px for ultra-sharp high resolution on tablets
             let width = img.width;
             let height = img.height;
 
@@ -134,8 +134,8 @@ export default function ParentsDashboard({
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              // Save as highly compressed but clear JPEG
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              // Save as clear high resolution JPEG (0.9 quality)
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
               setUploadedImageData(compressedDataUrl);
             } else {
               setUploadedImageData(reader.result as string);

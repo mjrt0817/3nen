@@ -7,35 +7,35 @@ export const DEFAULT_CARDS: Card[] = [
     name: 'ピカポチ',
     rarity: 'N',
     description: 'いつも元気に飛び跳ねている、でんきネズミ。ほっぺたを触ると静電気がピリリと走るよ。勉強が大好き！',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'n2',
     name: 'モリノコ',
     rarity: 'N',
     description: '森の奥深くに住んでいる葉っぱの妖精。読書が趣味で、漢字を覚えるのが得意なんだ。',
-    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'n3',
     name: 'ペンタロウ',
     rarity: 'N',
     description: 'お腹の星マークがチャームポイントのペンギン。算数の計算を始めるとスピードが止まらない！',
-    imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'n4',
     name: 'コロリン',
     rarity: 'N',
     description: 'ころころ転がる不思議な岩石モンスター。数字の「0」が大好きで、わり算を応援してくれる。',
-    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'n5',
     name: 'ウサノフ',
     rarity: 'N',
     description: 'ノートを抱えたウサギ。いつも勉強の予定をメモしている、しっかり者。',
-    imageUrl: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=1200&auto=format&fit=crop&q=80',
   },
   // Rare Cards
   {
@@ -43,28 +43,28 @@ export const DEFAULT_CARDS: Card[] = [
     name: 'イナズマレオ',
     rarity: 'R',
     description: '雲の上を走る、雷の力を持つちいさなライオン。算数の「かけ算筆算」で稲妻のような速さを手に入れた！',
-    imageUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'r2',
     name: 'ホシヨミフクロウ',
     rarity: 'R',
     description: '夜空の星を読んで未来を占うフクロウ。漢字の歴史をすべて知っている物知り博士。',
-    imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'r3',
     name: 'アクアドフィン',
     rarity: 'R',
     description: 'きれいな水の世界を守るイルカ。分数の計算が得意で、ピザやケーキを等分するのが大好き。',
-    imageUrl: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'r4',
     name: 'クリスタルキツネ',
     rarity: 'R',
     description: '結晶のような美しいしっぽを持つキツネ。集中力が高まると、体が青くきらめくよ。',
-    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&auto=format&fit=crop&q=80',
   },
   // Super Rare Cards
   {
@@ -72,21 +72,21 @@ export const DEFAULT_CARDS: Card[] = [
     name: 'フェニックス・マスタリー',
     rarity: 'SR',
     description: 'あきらめずに挑戦し続けた勉強者にのみ姿を現す不死鳥。すべてを包み込む暖かい光で満ちている。',
-    imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'sr2',
     name: 'ギャラクシードラゴン',
     rarity: 'SR',
     description: '銀河のエネルギーを宿した伝説のドラゴン。大きな数（億兆）を自由に操り、宇宙を旅する。',
-    imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=1200&auto=format&fit=crop&q=80',
   },
   {
     id: 'sr3',
     name: 'エンプレス・サクラ',
     rarity: 'SR',
     description: '漢字の奥義を極めた美しい桜の精霊。流れるような筆さばきで、すべての漢字を美しく書き上げる。',
-    imageUrl: 'https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=200&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?w=1200&auto=format&fit=crop&q=80',
   }
 ];
 
