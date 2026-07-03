@@ -95,11 +95,103 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
     setSessionLogs((prev) => [...prev, newLog]);
   };
 
+  // Helper to check pixel density to detect blank or scribbled/filled canvases
+  const analyzeDrawingPixels = (base64Image: string): Promise<{ strokeRatio: number; status: 'empty' | 'too_much' | 'ok' }> => {
+    return new Promise((resolve) => {
+      if (!base64Image) {
+        resolve({ strokeRatio: 0, status: 'empty' });
+        return;
+      }
+
+      const img = new Image();
+      img.src = base64Image;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 100; // Downscale to 100x100 for fast analysis
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve({ strokeRatio: 0.1, status: 'ok' });
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, size, size);
+        const imgData = ctx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+        let blackPixels = 0;
+        const totalPixels = size * size;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3];
+          // Check if pixel is drawn (alpha value is high enough)
+          if (a > 30) {
+            blackPixels++;
+          }
+        }
+
+        const strokeRatio = blackPixels / totalPixels;
+        let status: 'empty' | 'too_much' | 'ok' = 'ok';
+        if (strokeRatio < 0.003) {
+          status = 'empty'; // Almost no pixels are drawn
+        } else if (strokeRatio > 0.35) {
+          status = 'too_much'; // Canvas is blacked out/filled with ink
+        }
+
+        resolve({ strokeRatio, status });
+      };
+      img.onerror = () => {
+        resolve({ strokeRatio: 0.1, status: 'ok' });
+      };
+    });
+  };
+
   const handleGrade = async () => {
     if (!capturedImage) return;
 
     setIsGrading(true);
     setGradingResult(null);
+
+    // 1. Analyze pixels first to prevent malicious/empty entries from getting high scores
+    const analysis = await analyzeDrawingPixels(capturedImage);
+    if (analysis.status === 'empty' || analysis.status === 'too_much') {
+      let score = 0;
+      let feedback = '';
+      let strokesFeedback = '';
+
+      if (analysis.status === 'empty') {
+        score = 0;
+        feedback = `あれれ？文字が書かれていないみたいだよ。おてほんをよく見て、白い箱の中に漢字を書いてみてね！`;
+        strokesFeedback = '画面をタッチして、大きくはっきりと書いてみよう！';
+      } else {
+        score = 15;
+        feedback = `うわぁ！まっくろに塗りつぶされているよ！いたずらしないで、おてほんをよく見て一画ずつていねいに書こうね。`;
+        strokesFeedback = '一本ずつの線（画）を意識して、お手本と同じように書いてみよう！';
+      }
+
+      setGradingResult({
+        score: score,
+        feedback: feedback,
+        strokes_feedback: strokesFeedback,
+        is_correct: false,
+      });
+
+      const newLog: Omit<LearningLog, 'id' | 'timestamp'> = {
+        subject: 'kanji',
+        topicName: '漢字書きとり',
+        questionText: `${currentQuestion.contextBefore}(${currentQuestion.reading})${currentQuestion.contextAfter}`,
+        userAnswer: analysis.status === 'empty' ? '（白紙）' : '（塗りつぶし）',
+        correctAnswer: currentQuestion.kanji,
+        isCorrect: false,
+        score: score,
+        coinsEarned: 0,
+        feedback: feedback,
+        strokesFeedback: strokesFeedback,
+      };
+      setSessionLogs((prev) => [...prev, newLog]);
+      setIsGrading(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/gemini/grade', {
