@@ -83,10 +83,25 @@ export default function App() {
               const merged: StudentState = {
                 coins: cloudData.coins !== undefined ? Math.max(prev.coins, cloudData.coins) : prev.coins,
                 unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
-                customCards: [
-                  ...(cloudData.customCards || []),
-                  ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
-                ],
+                customCards: (() => {
+                  const localCards = prev.customCards || [];
+                  const cloudCards = cloudData.customCards || [];
+                  const cardMap = new Map<string, Card>();
+
+                  // First, add all local cards to the map
+                  localCards.forEach(c => cardMap.set(c.id, c));
+
+                  // Overwrite or add from cloud if cloud has a newer or same timestamp,
+                  // or if it doesn't exist locally.
+                  cloudCards.forEach(c => {
+                    const existing = cardMap.get(c.id);
+                    if (!existing || (c.updatedAt || 0) > (existing.updatedAt || 0)) {
+                      cardMap.set(c.id, c);
+                    }
+                  });
+
+                  return Array.from(cardMap.values());
+                })(),
                 learningLogs: [
                   ...prev.learningLogs,
                   ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))

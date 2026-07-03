@@ -27,6 +27,7 @@ export interface Card {
   description: string;
   imageUrl: string;
   isCustom?: boolean;
+  updatedAt?: number;
 }
 
 export interface Badge {

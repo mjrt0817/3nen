@@ -165,6 +165,7 @@ export default function ParentsDashboard({
         description: cardDesc,
         rarity: cardRarity,
         imageUrl: finalUrl,
+        updatedAt: Date.now(),
       };
       onUpdateCustomCard(updatedCard);
       setEditingCard(null);
@@ -176,7 +177,8 @@ export default function ParentsDashboard({
         description: cardDesc,
         rarity: cardRarity,
         imageUrl: finalUrl,
-        isCustom: true
+        isCustom: true,
+        updatedAt: Date.now(),
       };
       onAddCustomCard(newCard);
     }
