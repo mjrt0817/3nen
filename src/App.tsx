@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from 'motion/react';
 // Firebase imports
 import { auth, db, googleProvider, signInWithPopup, signOut } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // Default initial state
 const INITIAL_STATE: StudentState = {
@@ -66,51 +66,73 @@ export default function App() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
 
-  // 1. Auth State & Firestore Sync Listener
+  // 1. Auth State & Firestore Sync Listener with Real-Time onSnapshot
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (currentUser) {
         setIsSyncing(true);
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
           
-          if (userDocSnap.exists()) {
-            const cloudData = userDocSnap.data() as StudentState;
-            // Merge local storage and cloud states to ensure no progress is lost
-            setState(prev => {
-              const merged: StudentState = {
-                coins: Math.max(prev.coins, cloudData.coins || 0),
-                unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
-                customCards: [
-                  ...(cloudData.customCards || []),
-                  ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
-                ],
-                learningLogs: [
-                  ...prev.learningLogs,
-                  ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))
-                ].sort((a, b) => b.timestamp - a.timestamp),
-                currentStreak: Math.max(prev.currentStreak, cloudData.currentStreak || 0),
-                longestStreak: Math.max(prev.longestStreak, cloudData.longestStreak || 0),
-                lastStudyDate: prev.lastStudyDate || cloudData.lastStudyDate || null,
-                unlockedBadgeIds: Array.from(new Set([...prev.unlockedBadgeIds, ...(cloudData.unlockedBadgeIds || [])])),
-                childName: cloudData.childName || prev.childName,
-              };
-              return merged;
-            });
-          } else {
-            // Create initial record in Firestore with local state
-            await setDoc(userDocRef, state);
-          }
+          // Use real-time snapshot listener
+          unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+              // Only update local state if the update comes from server/other device (not our own pending writes)
+              if (!docSnap.metadata.hasPendingWrites) {
+                const cloudData = docSnap.data() as StudentState;
+                setState(prev => {
+                  const merged: StudentState = {
+                    coins: cloudData.coins !== undefined ? cloudData.coins : prev.coins,
+                    unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
+                    customCards: [
+                      ...(cloudData.customCards || []),
+                      ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
+                    ],
+                    learningLogs: [
+                      ...prev.learningLogs,
+                      ...(cloudData.learningLogs || []).filter(l1 => !prev.learningLogs.some(l2 => l2.id === l1.id))
+                    ].sort((a, b) => b.timestamp - a.timestamp),
+                    currentStreak: Math.max(prev.currentStreak, cloudData.currentStreak || 0),
+                    longestStreak: Math.max(prev.longestStreak, cloudData.longestStreak || 0),
+                    lastStudyDate: prev.lastStudyDate || cloudData.lastStudyDate || null,
+                    unlockedBadgeIds: Array.from(new Set([...prev.unlockedBadgeIds, ...(cloudData.unlockedBadgeIds || [])])),
+                    childName: cloudData.childName || prev.childName,
+                    gachaRates: cloudData.gachaRates || prev.gachaRates,
+                  };
+                  return merged;
+                });
+              }
+            } else {
+              // Create initial record in Firestore with local state
+              setDoc(userDocRef, state).catch(e => console.error("Initial setDoc error:", e));
+            }
+            setIsSyncing(false);
+          }, (error) => {
+            console.error("Firestore snapshot error:", error);
+            setIsSyncing(false);
+          });
         } catch (e) {
-          console.error("Firestore sync error on auth change:", e);
-        } finally {
+          console.error("Firestore sync setup error:", e);
           setIsSyncing(false);
         }
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+    };
   }, []);
 
   // 2. Sync state to localstorage or firestore whenever it changes
