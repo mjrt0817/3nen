@@ -14,6 +14,7 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
   const allCards = [...DEFAULT_CARDS, ...customCards];
+  const liveSelectedCard = selectedCard ? allCards.find(c => c.id === selectedCard.id) || selectedCard : null;
   const unlockedCount = allCards.filter(c => unlockedCardIds.includes(c.id)).length;
   const totalCount = allCards.length;
   const completionRate = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
@@ -198,7 +199,7 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
       )}
 
       {/* Card Detail Dialog / Modal */}
-      {selectedCard && (
+      {liveSelectedCard && (
         <div 
           id="card-detail-modal"
           className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-xs"
@@ -209,7 +210,7 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
             onClick={(e) => e.stopPropagation()}
           >
             {/* Rarity sparkles */}
-            {selectedCard.rarity !== 'N' && (
+            {liveSelectedCard.rarity !== 'N' && (
               <div className="absolute top-2 left-2 text-rose-400 animate-pulse">
                 <Sparkles size={24} />
               </div>
@@ -224,7 +225,7 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
             </button>
 
             {/* Custom label */}
-            {selectedCard.isCustom && (
+            {liveSelectedCard.isCustom && (
               <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-3 shadow-xs">
                 おうちの人オリジナルカード
               </span>
@@ -233,28 +234,28 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
             {/* Large Image - Click to full screen */}
             <div 
               className="w-full aspect-[63/88] max-h-[50vh] rounded-2xl overflow-hidden bg-slate-100 mb-4 border border-slate-200 shadow-inner cursor-zoom-in hover:opacity-90 transition-opacity"
-              onClick={() => setFullScreenImage(selectedCard.imageUrl)}
+              onClick={() => setFullScreenImage(liveSelectedCard.imageUrl)}
               title="タップして拡大"
             >
               <img
-                src={selectedCard.imageUrl}
-                alt={selectedCard.name}
+                src={liveSelectedCard.imageUrl}
+                alt={liveSelectedCard.name}
                 className="w-full h-full object-contain bg-black/5"
                 referrerPolicy="no-referrer"
               />
             </div>
 
             {/* Details */}
-            <span className={`text-xs font-black px-3 py-1 rounded-full mb-2 ${getRarityBadge(selectedCard.rarity).style}`}>
-              {getRarityBadge(selectedCard.rarity).text}
+            <span className={`text-xs font-black px-3 py-1 rounded-full mb-2 ${getRarityBadge(liveSelectedCard.rarity).style}`}>
+              {getRarityBadge(liveSelectedCard.rarity).text}
             </span>
 
             <h3 className="text-lg font-black text-slate-800 mb-3 text-center">
-              {selectedCard.name}
+              {liveSelectedCard.name}
             </h3>
 
             <p className="text-xs text-slate-600 leading-relaxed text-center bg-slate-50 p-3.5 rounded-xl border border-slate-100 w-full mb-4 max-h-[100px] overflow-y-auto">
-              {selectedCard.description}
+              {liveSelectedCard.description}
             </p>
 
             <button

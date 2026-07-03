@@ -84,8 +84,8 @@ export default function App() {
                 coins: Math.max(prev.coins, cloudData.coins || 0),
                 unlockedCardIds: Array.from(new Set([...prev.unlockedCardIds, ...(cloudData.unlockedCardIds || [])])),
                 customCards: [
-                  ...prev.customCards,
-                  ...(cloudData.customCards || []).filter(c1 => !prev.customCards.some(c2 => c2.id === c1.id))
+                  ...(cloudData.customCards || []),
+                  ...prev.customCards.filter(c1 => !(cloudData.customCards || []).some(c2 => c2.id === c1.id))
                 ],
                 learningLogs: [
                   ...prev.learningLogs,
