@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StudentState, LearningLog, Card, Badge } from './types';
 import { DEFAULT_CARDS, DEFAULT_BADGES } from './data';
 import ArithmeticGame from './components/ArithmeticGame';
@@ -59,6 +59,9 @@ export default function App() {
   const [activeDrill, setActiveDrill] = useState<'none' | 'math' | 'kanji'>('none');
   const [newBadgeUnlocked, setNewBadgeUnlocked] = useState<Badge | null>(null);
 
+  // Ref to skip sync-back when local state was updated by incoming cloud changes
+  const skipNextSyncRef = useRef(false);
+
   // Firebase User Auth State
   const [user, setUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -108,6 +111,13 @@ export default function App() {
                     childName: cloudData.childName || prev.childName,
                     gachaRates: cloudData.gachaRates || prev.gachaRates,
                   };
+
+                  // Dual safety: string comparison prevents redundant state updates and potential loops
+                  if (JSON.stringify(prev) === JSON.stringify(merged)) {
+                    return prev;
+                  }
+
+                  skipNextSyncRef.current = true;
                   return merged;
                 });
               }
@@ -138,6 +148,10 @@ export default function App() {
   // 2. Sync state to localstorage or firestore whenever it changes
   useEffect(() => {
     if (isSyncing) return;
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
+    }
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
       setDoc(userDocRef, state).catch(e => console.error("Firestore write error:", e));
