@@ -80,13 +80,10 @@ export default function App() {
           if (docSnap.exists()) {
             const cloudData = docSnap.data() as StudentState;
             setState(prev => {
-              // Upload local custom cards to subcollection if they exist locally
-              if (prev.customCards && prev.customCards.length > 0) {
-                prev.customCards.forEach((card) => {
-                  const cardDocRef = doc(db, 'users', currentUser.uid, 'customCards', card.id);
-                  setDoc(cardDocRef, card).catch(e => console.error("Error uploading offline custom card:", e));
-                });
-              }
+              // Do NOT upload prev.customCards here.
+              // prev.customCards may be stale localStorage data from another device/session.
+              // Re-uploading it would overwrite cards that were already updated in the parent dashboard.
+              // The real-time customCards listener below is the source of truth and will replace local copies.
 
               const merged: StudentState = {
                 coins: cloudData.coins !== undefined ? Math.max(prev.coins, cloudData.coins) : prev.coins,
@@ -115,13 +112,10 @@ export default function App() {
               const { customCards, ...stateToWrite } = current;
               setDoc(userDocRef, stateToWrite).catch(e => console.error("Initial setDoc error:", e));
               
-              // Upload local custom cards if any exist
-              if (current.customCards && current.customCards.length > 0) {
-                current.customCards.forEach((card) => {
-                  const cardDocRef = doc(db, 'users', currentUser.uid, 'customCards', card.id);
-                  setDoc(cardDocRef, card).catch(e => console.error("Error uploading offline custom card:", e));
-                });
-              }
+              // Do NOT automatically upload local customCards on first login.
+              // Local customCards can be old cached data; uploading them here can restore stale card info
+              // over newer data saved from the parent dashboard on another device.
+              // New/edited cards are written only from handleAddCustomCard / handleUpdateCustomCard.
               return current;
             });
           }
