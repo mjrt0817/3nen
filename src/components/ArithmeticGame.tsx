@@ -127,10 +127,13 @@ export default function ArithmeticGame({ onComplete, onAddCoins }: ArithmeticGam
   };
 
   const getTopicName = (id: string) => {
-    if (['m1', 'm2', 'm3', 'm4'].includes(id)) return 'わり算';
-    if (['m5', 'm6', 'm7'].includes(id)) return 'かけ算筆算';
-    if (['m8'].includes(id)) return 'あまりのあるわり算';
-    if (['m9'].includes(id)) return '大きな数';
+    if (['m1', 'm2', 'm3', 'm4'].includes(id) || id.startsWith('m_div_exact')) return 'わり算';
+    if (['m5', 'm6', 'm7'].includes(id) || id.startsWith('m_mul_table') || id.startsWith('m_mul_column')) return 'かけ算・かけ算筆算';
+    if (['m8'].includes(id) || id.startsWith('m_div_rem')) return 'あまりのあるわり算';
+    if (['m9'].includes(id) || id.startsWith('m_place')) return '大きな数';
+    if (id.startsWith('m_add_basic')) return 'たし算';
+    if (id.startsWith('m_sub_basic')) return 'ひき算';
+    if (id.startsWith('m_unit')) return '時こく・単位・お金';
     return '小数・分数';
   };
 
