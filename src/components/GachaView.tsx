@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, RarityType, GachaRates } from '../types';
 import { DEFAULT_CARDS } from '../data';
@@ -87,9 +87,11 @@ const playSound = (type: 'lever' | 'capsule' | 'reveal' | 'rare' | 'super_rare')
 
 export default function GachaView({ coins, unlockedCardIds, customCards, gachaRates, onDrawCard, onNavigateToAlbum }: GachaViewProps) {
   const [isSpinning, setIsSpinning] = useState(false);
-  const [activeCapsule, setActiveCapsule] = useState<string | null>(null); // 'N', 'R', 'SR', 'SSR', 'UR'
+  const [activeCapsule, setActiveCapsule] = useState<RarityType | null>(null);
+  const [pendingCard, setPendingCard] = useState<Card | null>(null);
   const [revealedCard, setRevealedCard] = useState<Card | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const revealInProgressRef = useRef(false);
 
   // Pool all cards (including custom cards registered by parents)
   const getCardPool = (): Card[] => {
@@ -111,6 +113,8 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
     setIsSpinning(true);
     setRevealedCard(null);
     setActiveCapsule(null);
+    setPendingCard(null);
+    revealInProgressRef.current = false;
 
     // Pick a card based on custom or typical gacha weights:
     const rates = gachaRates || { UR: 2.5, SSR: 7.5, SR: 15, R: 25, N: 50 };
@@ -144,6 +148,9 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
     }
 
     const selectedCard = cardsOfRarity[Math.floor(Math.random() * cardsOfRarity.length)];
+    // Keep the exact selected card until the capsule is opened.
+    // Do not re-select later: card lists can change while the animation is running.
+    setPendingCard(selectedCard);
 
     // Gacha sequences (mechanical spin -> capsule falls -> burst open)
     setTimeout(() => {
@@ -154,14 +161,15 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
   };
 
   const revealCard = () => {
-    if (!activeCapsule) return;
+    if (!activeCapsule || !pendingCard || revealInProgressRef.current) return;
 
-    const pool = getCardPool();
-    // Re-verify a card is chosen (which we pre-determined based on capsule rarity, but here we execute drawing)
-    let candidates = pool.filter(c => c.rarity === activeCapsule);
-    if (candidates.length === 0) candidates = pool;
+    // Prevent double execution from rapid taps or event bubbling.
+    revealInProgressRef.current = true;
 
-    const selectedCard = candidates[Math.floor(Math.random() * candidates.length)];
+    // Use the exact card that was selected when the lever was turned.
+    // This prevents the album from unlocking a different card if cards are added/updated
+    // while the capsule animation is waiting to be opened.
+    const selectedCard = pendingCard;
 
     if (selectedCard.rarity === 'UR' || selectedCard.rarity === 'SSR') {
       playSound('super_rare');
@@ -174,6 +182,7 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
     onDrawCard(selectedCard, 10);
     setRevealedCard(selectedCard);
     setActiveCapsule(null);
+    setPendingCard(null);
   };
 
   const getRarityLabel = (rarity: RarityType) => {
@@ -341,7 +350,10 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
 
               <button
                 id="btn-open-capsule"
-                onClick={revealCard}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  revealCard();
+                }}
                 className="mt-6 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-full animate-bounce"
               >
                 ✨ タップしてあける！ ✨
@@ -424,7 +436,7 @@ export default function GachaView({ coins, unlockedCardIds, customCards, gachaRa
               {/* Repeat Button */}
               <button
                 id="btn-close-reveal"
-                onClick={() => setRevealedCard(null)}
+                onClick={() => { setRevealedCard(null); revealInProgressRef.current = false; }}
                 className="mt-3 px-6 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-full hover:bg-slate-700 active:scale-95 transition-all"
               >
                 もどる
