@@ -10,22 +10,56 @@ interface AlbumViewProps {
 
 export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewProps) {
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'custom'>('all');
+  const [rarityFilter, setRarityFilter] = useState<'all' | RarityType>('all');
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
+  const rarityOrder: Record<RarityType, number> = { UR: 0, SSR: 1, SR: 2, R: 3, N: 4 };
+  const rarityOptions: Array<'all' | RarityType> = ['all', 'UR', 'SSR', 'SR', 'R', 'N'];
+
   const allCards = [...DEFAULT_CARDS, ...customCards];
+  const sortedCards = [...allCards].sort((a, b) => {
+    const rarityDiff = rarityOrder[a.rarity] - rarityOrder[b.rarity];
+    if (rarityDiff !== 0) return rarityDiff;
+    if (a.isCustom !== b.isCustom) return a.isCustom ? 1 : -1;
+    return a.name.localeCompare(b.name, 'ja');
+  });
   const liveSelectedCard = selectedCard ? allCards.find(c => c.id === selectedCard.id) || selectedCard : null;
   const unlockedCount = allCards.filter(c => unlockedCardIds.includes(c.id)).length;
   const totalCount = allCards.length;
   const completionRate = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
 
-  // Filter list
-  const filteredCards = allCards.filter(card => {
+  const getCardsByCollectionFilter = (cards: Card[]) => cards.filter(card => {
     const isUnlocked = unlockedCardIds.includes(card.id);
     if (filter === 'unlocked') return isUnlocked;
     if (filter === 'custom') return card.isCustom === true;
     return true; // 'all'
   });
+
+  const collectionFilteredCards = getCardsByCollectionFilter(sortedCards);
+  const rarityCounts = rarityOptions.reduce((acc, rarity) => {
+    acc[rarity] = rarity === 'all'
+      ? collectionFilteredCards.length
+      : collectionFilteredCards.filter(card => card.rarity === rarity).length;
+    return acc;
+  }, {} as Record<'all' | RarityType, number>);
+
+  // Filter list: レア度順（UR → SSR → SR → R → N）に並べる
+  const filteredCards = collectionFilteredCards.filter(card => {
+    if (rarityFilter !== 'all' && card.rarity !== rarityFilter) return false;
+    return true;
+  });
+
+  const getRarityFilterLabel = (rarity: 'all' | RarityType) => {
+    if (rarity === 'all') return 'レア度すべて';
+    switch (rarity) {
+      case 'N': return 'N ノーマル';
+      case 'R': return 'R レア';
+      case 'SR': return 'SR';
+      case 'SSR': return 'SSR';
+      case 'UR': return 'UR';
+    }
+  };
 
   const getRarityBadge = (rarity: RarityType) => {
     switch (rarity) {
@@ -81,40 +115,64 @@ export default function AlbumView({ unlockedCardIds, customCards }: AlbumViewPro
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          id="btn-filter-all"
-          onClick={() => setFilter('all')}
-          className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
-            filter === 'all'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-          }`}
-        >
-          すべて ({totalCount})
-        </button>
-        <button
-          id="btn-filter-unlocked"
-          onClick={() => setFilter('unlocked')}
-          className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
-            filter === 'unlocked'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-          }`}
-        >
-          あつめたカード ({unlockedCount})
-        </button>
-        <button
-          id="btn-filter-custom"
-          onClick={() => setFilter('custom')}
-          className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
-            filter === 'custom'
-              ? 'bg-rose-600 text-white shadow-md'
-              : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-          }`}
-        >
-          おうちの人が作ったカード ({customCards.length})
-        </button>
+      <div className="mb-6 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            id="btn-filter-all"
+            onClick={() => setFilter('all')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+              filter === 'all'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+            }`}
+          >
+            すべて ({totalCount})
+          </button>
+          <button
+            id="btn-filter-unlocked"
+            onClick={() => setFilter('unlocked')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+              filter === 'unlocked'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            あつめたカード ({unlockedCount})
+          </button>
+          <button
+            id="btn-filter-custom"
+            onClick={() => setFilter('custom')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+              filter === 'custom'
+                ? 'bg-rose-600 text-white shadow-md'
+                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            おうちの人が作ったカード ({customCards.length})
+          </button>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3">
+          <p className="text-[11px] font-black text-slate-500 mb-2">
+            レア度でしぼりこみ（UR → SSR → SR → R → N の順に表示）
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {rarityOptions.map((rarity) => (
+              <button
+                key={rarity}
+                id={`btn-rarity-filter-${rarity.toLowerCase()}`}
+                onClick={() => setRarityFilter(rarity)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-black transition-all border ${
+                  rarityFilter === rarity
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-md'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                {getRarityFilterLabel(rarity)} ({rarityCounts[rarity]})
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Grid of Cards */}
