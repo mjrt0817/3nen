@@ -268,7 +268,7 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
     }
   };
 
-  const handleNext = () => {
+  const goToNextQuestion = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setGradingResult(null);
@@ -278,6 +278,15 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
       setIsFinished(true);
       onComplete(sessionLogs);
     }
+  };
+
+  const handleNext = () => {
+    goToNextQuestion();
+  };
+
+  const handleSkip = () => {
+    if (isGrading || gradingResult) return;
+    goToNextQuestion();
   };
 
   const restartGame = () => {
@@ -477,6 +486,17 @@ export default function KanjiGame({ onComplete, onAddCoins }: KanjiGameProps) {
                   <p className="text-[9px] text-center text-slate-400 font-bold">
                     ※AIが形をみて、ハネやトメの個別アドバイスをおくります
                   </p>
+
+                  <button
+                    id="btn-skip-kanji"
+                    type="button"
+                    onClick={handleSkip}
+                    disabled={isGrading}
+                    className="w-full py-3 bg-slate-100 text-slate-600 font-black text-xs rounded-xl hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-slate-200 flex items-center justify-center gap-2"
+                  >
+                    <span>{currentIndex < questions.length - 1 ? 'この文字をスキップ' : 'この文字をスキップしておわる'}</span>
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
               )}
 

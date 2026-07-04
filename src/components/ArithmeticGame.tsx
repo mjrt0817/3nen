@@ -137,7 +137,7 @@ export default function ArithmeticGame({ onComplete, onAddCoins }: ArithmeticGam
     return '小数・分数';
   };
 
-  const handleNext = () => {
+  const goToNextQuestion = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setHasAnswered(false);
@@ -147,6 +147,15 @@ export default function ArithmeticGame({ onComplete, onAddCoins }: ArithmeticGam
       setIsFinished(true);
       onComplete(sessionLogs);
     }
+  };
+
+  const handleNext = () => {
+    goToNextQuestion();
+  };
+
+  const handleSkip = () => {
+    if (hasAnswered) return;
+    goToNextQuestion();
   };
 
   const restartGame = () => {
@@ -289,7 +298,18 @@ export default function ArithmeticGame({ onComplete, onAddCoins }: ArithmeticGam
               )}
             </AnimatePresence>
 
-            {/* Next Button */}
+            {/* Skip / Next Button */}
+            {!hasAnswered && (
+              <button
+                id="btn-skip-question"
+                onClick={handleSkip}
+                className="w-full mt-2 py-3 bg-slate-100 text-slate-600 font-black text-sm rounded-xl hover:bg-slate-200 transition-all border border-slate-200 flex items-center justify-center gap-2"
+              >
+                <span>{currentIndex < questions.length - 1 ? 'この問題をスキップ' : 'この問題をスキップしておわる'}</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+
             {hasAnswered && (
               <button
                 id="btn-next-question"
